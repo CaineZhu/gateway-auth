@@ -22,7 +22,6 @@ public class ErrorHandlerController implements ErrorController {
     }
 
     @RequestMapping("/error")
-    @ResponseBody
     public ResultMap error(HttpServletRequest request){
         Integer status = (Integer)request.getAttribute("javax.servlet.error.status_code");
         return new ResultMap().failed(status == 404 ? "访问地址不存在" : "内部服务器错误,正在处理");

@@ -15,7 +15,6 @@ import com.netflix.zuul.exception.ZuulException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -59,11 +58,15 @@ public class TokenFilter extends ZuulFilter {
 
     @Override
     public int filterOrder() {
-        return 1;
+        return 2;
     }
 
     @Override
     public boolean shouldFilter() {
+        RequestContext ctx = RequestContext.getCurrentContext();
+        if (!ctx.sendZuulResponse()) {
+            return false;
+        }
         String matcher = UrlMatcherTools.urlMatcher(RequestContext.getCurrentContext().getRequest().getRequestURI().toString(), "");
         if (matcher == null) {
             return true;
@@ -79,11 +82,7 @@ public class TokenFilter extends ZuulFilter {
         try {
             String token = request.getHeader("token");
             if (null == token) {
-                ctx.setSendZuulResponse(false);
-                HttpServletResponse response = ctx.getResponse();
-                response.setCharacterEncoding(Constant.DEFAULT_CHARSET);
-                response.getWriter().write(JSONObject.toJSONString(new ResultMap().error("请登录")));
-                ctx.setResponse(response);
+                loginErr(ctx, "请登录");
             } else {
                 UserInfo tokenInfo = tokenValidator.validation(token);
                 //token通过逻辑
@@ -96,7 +95,8 @@ public class TokenFilter extends ZuulFilter {
                                 ctx.setSendZuulResponse(false);
                                 HttpServletResponse response = ctx.getResponse();
                                 response.setCharacterEncoding(Constant.DEFAULT_CHARSET);
-                                response.getWriter().write(JSONObject.toJSONString(new ResultMap().failed("权限不足")));
+                                response.getWriter().write(JSONObject.toJSONString(new ResultMap().error("权限不足")));
+                                return null;
                             }
                         }
                         //关键字验证器
@@ -107,17 +107,30 @@ public class TokenFilter extends ZuulFilter {
                         HttpServletResponse response = ctx.getResponse();
                         response.setCharacterEncoding(Constant.DEFAULT_CHARSET);
                         response.getWriter().write(JSONObject.toJSONString(e.getLevel() == Constant.EXCEPTION_LEVEL_1 ? new ResultMap().error(e.getMessage()) : new ResultMap().failed(e.getMessage())));
+                        return null;
                     }
                 } else {
-                    ctx.setSendZuulResponse(false);
-                    HttpServletResponse response = ctx.getResponse();
-                    response.setCharacterEncoding(Constant.DEFAULT_CHARSET);
-                    response.getWriter().write(JSONObject.toJSONString(new ResultMap().error("请登录")));
+                    loginErr(ctx, "请登录");
                 }
             }
         } catch (IOException e) {
             logger.error("token filter IOException", e);
         }
         return null;
+    }
+
+    /**
+     * 未登陆提示
+     *
+     * @param ctx
+     * @param msg
+     * @throws IOException
+     */
+    private void loginErr(RequestContext ctx, String msg) throws IOException {
+        ctx.setSendZuulResponse(false);
+        HttpServletResponse response = ctx.getResponse();
+        response.setCharacterEncoding(Constant.DEFAULT_CHARSET);
+        response.getWriter().write(JSONObject.toJSONString(new ResultMap().failed(msg)));
+        ctx.setResponse(response);
     }
 }

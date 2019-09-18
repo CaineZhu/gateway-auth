@@ -35,4 +35,22 @@ public class Constant {
     public static final int RESPONSE_SUCCESS = 200;
     public static final int RESPONSE_FAILED = 400;
     public static final int RESPONSE_ERROR = 500;
+
+    public static final String SHA256 = "SHA-256";
+
+    /**
+     * 请求延迟时间
+     */
+    public static final long REQ_LIMITS = -2L;
+
+    /**
+     * 项目redis key的前缀
+     */
+    public static final String REDIS_KEY_PREFIX = "platform-key-prefix-";
+
+    /**
+     * 请求随机数前缀
+     */
+    public static final String REQ_RANDOM_PREFIX = REDIS_KEY_PREFIX + "req-random-code-";
+
 }

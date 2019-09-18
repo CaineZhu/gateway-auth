@@ -10,12 +10,22 @@ public class StringTools {
 
     /**
      * 对象空判断
+     *
      * @param obj
      * @return
      */
-    public static boolean isNullOrEmpty(Object obj){
-        if(obj == null || obj.toString().toString().equals("")){
+    public static boolean isNullOrEmpty(Object obj) {
+        if (obj == null || obj.toString().equals("")) {
             return true;
+        }
+        return false;
+    }
+
+    public static boolean isNullOrEmpty(String... vals) {
+        for (String obj : vals) {
+            if (obj == null || obj.equals("")) {
+                return true;
+            }
         }
         return false;
     }
